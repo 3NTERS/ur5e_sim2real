@@ -1,0 +1,28 @@
+<launch>
+  <arg name="policy_path" />
+  <arg name="policy_device" default="cpu" />
+  <arg name="action_mode" default="delta" />
+  <arg name="send_to_controller" default="false" />
+  <arg name="use_rviz" default="true" />
+  <arg name="rl_state_topic" default="/rl_state" />
+  <arg name="rl_action_topic" default="/rl_action" />
+
+  <include file="$(find ur5e_rl_control)/launch/ur5e_rl_control.launch">
+    <arg name="rl_state_topic" value="$(arg rl_state_topic)" />
+    <arg name="rl_action_topic" value="$(arg rl_action_topic)" />
+    <arg name="action_mode" value="$(arg action_mode)" />
+    <arg name="send_to_controller" value="$(arg send_to_controller)" />
+    <arg name="use_rviz" value="$(arg use_rviz)" />
+  </include>
+
+  <node pkg="ur5e_rl_control"
+        type="ur5e_traj_bridge.py"
+        name="isaacgym_policy_bridge"
+        output="screen">
+    <rosparam command="load" file="$(find ur5e_rl_control)/config/cfg.yaml" />
+    <param name="policy_path" value="$(arg policy_path)" />
+    <param name="policy_device" value="$(arg policy_device)" />
+    <param name="rl_state_topic" value="$(arg rl_state_topic)" />
+    <param name="rl_action_topic" value="$(arg rl_action_topic)" />
+  </node>
+</launch>

@@ -48,3 +48,25 @@ sine_frequency: 0.2
 generator_max_delta_action: 1.0
 generator_baseline: [0.0, -1.57079632679, 1.57079632679, -1.57079632679, -1.57079632679, 0.0]
 generator_amplitude: [0.35, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+# Isaac Gym .pth policy inference.
+policy_observation_dim: 18
+policy_action_dim: 6
+policy_rate: 20.0
+policy_state_timeout: 0.25
+policy_device: cpu
+policy_action_clip: 1.0
+policy_observation_clip: 0.0  # 0 disables clipping
+policy_activation: elu
+policy_output_key: ""  # e.g. mus for a dict output; empty enables common-key detection
+policy_output_index: 0  # used when a scripted policy returns a tuple/list
+
+# Maps /rl_state into the policy input. The default consumes
+# [q(6), dq(6), tau(6)] without reordering or normalization.
+policy_observation_indices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+policy_observation_offset: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+policy_observation_scale: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+# Pure state_dict checkpoints may need these fields. Leave empty for auto-detection.
+policy_state_dict_key: ""
+policy_layer_keys: []

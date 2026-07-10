@@ -19,3 +19,7 @@ __pycache__/
 !/src/CMakeLists.txt
 !/src/ur5e_rl_control/
 !/src/ur5e_rl_control/**
+
+# Trained policies are local runtime artifacts and can be large.
+*.pth
+*.pt

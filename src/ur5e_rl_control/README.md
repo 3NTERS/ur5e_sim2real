@@ -128,6 +128,70 @@ contains exactly six values in the order shown above. To use another command top
 roslaunch ur5e_rl_control ur5e_rl_control.launch input_topic:=/my_joint_command
 ```
 
+## Isaac Gym `.pth` policy inference
+
+`scripts/ur5e_traj_bridge.py` loads a trusted PyTorch policy, subscribes to the
+18-dimensional `/rl_state`, and publishes its six-dimensional output to `/rl_action`.
+Start in RViz-only mode:
+
+```bash
+catkin_make
+source devel/setup.bash
+roslaunch ur5e_rl_control ur5e_policy.launch \
+  policy_path:=/absolute/path/to/policy.pth \
+  policy_device:=cpu
+```
+
+The loader accepts, in order:
+
+1. TorchScript saved with `torch.jit.save` (recommended for deployment).
+2. A checkpoint containing a complete `torch.nn.Module`.
+3. An actor state_dict from common Isaac Gym training layouts.
+
+For a pure state_dict, actor layers are auto-detected when their keys contain
+`actor`, `policy`, or `mu`. If detection is ambiguous, specify the exact linear-layer
+base keys in execution order:
+
+```yaml
+policy_state_dict_key: model_state_dict
+policy_layer_keys:
+  - actor.0
+  - actor.2
+  - actor.4
+  - actor.6
+```
+
+The node logs every detected layer key. A chain must map
+`policy_observation_dim: 18` to `policy_action_dim: 6`.
+
+The policy input is formed as:
+
+```text
+observation[i] =
+  (rl_state[policy_observation_indices[i]] - policy_observation_offset[i])
+  * policy_observation_scale[i]
+```
+
+These indices, offsets, scales, clipping values, action scale, action semantics and
+joint ordering must exactly match training. The default identity mapping consumes
+`[q(6), dq(6), tau(6)]`. A policy trained with relative joint angles, commands,
+previous actions or other observations cannot use that default unchanged.
+
+Typical normalized delta-action deployment uses matching settings such as:
+
+```yaml
+action_mode: delta
+action_scale: 0.05
+policy_action_clip: 1.0
+```
+
+Policy publication stops when `/rl_state` is stale or invalid. Controller output is
+still disabled by default. Only after checking `/rl_state`, normalized observations
+and `/rl_action` in RViz should hardware output be explicitly enabled.
+
+> Load only `.pth` files you trust. Python pickle-based PyTorch checkpoints can
+> execute code while loading. Model files are ignored by Git in this repository.
+
 # 
 ur5e_rl_control/
 ├──asset/
