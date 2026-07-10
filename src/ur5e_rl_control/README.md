@@ -83,11 +83,31 @@ Sine input:
 roslaunch ur5e_rl_control ur5e_action_test.launch signal_type:=sine
 ```
 
+Delta-mode sine input:
+
+```bash
+roslaunch ur5e_rl_control ur5e_action_test.launch \
+  signal_type:=sine action_mode:=delta
+```
+
+In delta mode the generator subscribes to `/rl_state`, extracts its first six
+position values, and publishes the element-wise normalized position error:
+
+```text
+action[i] = (desired_position[i] - actual_position[i]) / action_scale
+```
+
+Before the signal starts, `desired_position` is the configured baseline. During the
+test it becomes `baseline + amplitude * wave`. The generator waits for a valid
+18-dimensional state before publishing and clamps each test action to
+`generator_max_delta_action` by default. It never subtracts Python lists directly.
+
 Generator parameters are in `config/cfg.yaml`:
 
 ```yaml
 generator_start_delay: 2.0
 sine_frequency: 0.2
+generator_max_delta_action: 1.0
 generator_baseline: [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
 generator_amplitude: [0.35, 0.0, 0.0, 0.0, 0.0, 0.0]
 ```

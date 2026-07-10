@@ -1,12 +1,15 @@
 <launch>
   <arg name="signal_type" default="step" />
+  <arg name="action_mode" default="position" />
   <arg name="send_to_controller" default="false" />
   <arg name="use_rviz" default="true" />
   <arg name="rl_action_topic" default="/rl_action" />
+  <arg name="rl_state_topic" default="/rl_state" />
 
   <include file="$(find ur5e_rl_control)/launch/ur5e_rl_control.launch">
     <arg name="rl_action_topic" value="$(arg rl_action_topic)" />
-    <arg name="action_mode" value="position" />
+    <arg name="action_mode" value="$(arg action_mode)" />
+    <arg name="rl_state_topic" value="$(arg rl_state_topic)" />
     <arg name="send_to_controller" value="$(arg send_to_controller)" />
     <arg name="use_rviz" value="$(arg use_rviz)" />
   </include>
@@ -17,6 +20,8 @@
         output="screen">
     <rosparam command="load" file="$(find ur5e_rl_control)/config/cfg.yaml" />
     <param name="signal_type" value="$(arg signal_type)" />
+    <param name="action_mode" value="$(arg action_mode)" />
     <param name="rl_action_topic" value="$(arg rl_action_topic)" />
+    <param name="rl_state_topic" value="$(arg rl_state_topic)" />
   </node>
 </launch>

@@ -43,5 +43,8 @@ signal_type: step
 generator_publish_rate: 50.0
 generator_start_delay: 2.0
 sine_frequency: 0.2
+# In delta mode, clamp each normalized test action to this magnitude.
+# Set to 0 to disable generator-side clamping.
+generator_max_delta_action: 1.0
 generator_baseline: [0.0, -1.57079632679, 1.57079632679, -1.57079632679, -1.57079632679, 0.0]
 generator_amplitude: [0.35, 0.0, 0.0, 0.0, 0.0, 0.0]
