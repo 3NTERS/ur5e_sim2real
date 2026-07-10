@@ -1,0 +1,38 @@
+# Joint-state visualization parameters.
+# Angles carried by sensor_msgs/JointState are in radians.
+input_topic: /ur5e/joint_command
+output_topic: /joint_states
+publish_rate: 50.0
+command_timeout: 0.0  # 0 disables timeout warnings
+
+joint_names:
+  - shoulder_pan_joint
+  - shoulder_lift_joint
+  - elbow_joint
+  - wrist_1_joint
+  - wrist_2_joint
+  - wrist_3_joint
+
+# Used until the first command arrives.
+initial_positions: [0.0, -1.57079632679, 1.57079632679, -1.57079632679, -1.57079632679, 0.0]
+
+# RL action -> FollowJointTrajectory settings.
+# /rl_action uses std_msgs/Float64MultiArray with exactly six values.
+rl_action_topic: /rl_action
+visualization_topic: /ur5e/joint_command
+joint_state_topic: /joint_states
+controller_action: /scaled_pos_joint_traj_controller/follow_joint_trajectory
+
+# position: action values are absolute joint angles (rad).
+# delta: scaled action values are added to the latest joint state.
+action_mode: position
+action_scale: 1.0
+trajectory_duration: 0.2
+trajectory_start_delay: 0.05
+
+# Safety default: RViz visualization only. Explicitly enable for a configured robot.
+send_to_controller: false
+controller_wait_timeout: 5.0
+clamp_to_limits: true
+lower_limits: [-6.28318530718, -6.28318530718, -3.14159265359, -6.28318530718, -6.28318530718, -6.28318530718]
+upper_limits: [6.28318530718, 6.28318530718, 3.14159265359, 6.28318530718, 6.28318530718, 6.28318530718]

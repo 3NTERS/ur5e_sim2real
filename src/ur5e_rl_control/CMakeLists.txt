@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ur5e_rl_control)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11 -Wall -Wextra)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   sensor_msgs
+  std_msgs
   trajectory_msgs
 )
 
@@ -106,10 +107,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES ur5e_rl_control
-#  CATKIN_DEPENDS actionlib control_msgs roscpp rospy sensor_msgs trajectory_msgs
-#  DEPENDS system_lib
+  INCLUDE_DIRS include
+  LIBRARIES ur5e_control_core
+  CATKIN_DEPENDS actionlib control_msgs roscpp rospy sensor_msgs std_msgs trajectory_msgs
 )
 
 ###########
@@ -119,8 +119,20 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
+)
+
+add_library(ur5e_control_core
+  src/trajectory_sender.cpp
+  src/ur5e_execution_node.cpp
+)
+target_link_libraries(ur5e_control_core ${catkin_LIBRARIES})
+
+add_executable(ur5e_execution_node src/main.cpp)
+target_link_libraries(ur5e_execution_node
+  ur5e_control_core
+  ${catkin_LIBRARIES}
 )
 
 ## Declare a C++ library
@@ -162,16 +174,26 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+  scripts/joint_state_visualizer.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY asset config launch rviz
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS ur5e_control_core ur5e_execution_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html

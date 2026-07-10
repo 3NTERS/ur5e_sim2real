@@ -3,9 +3,55 @@ sudo sed -i 's|http://packages.ros.org/ros/ubuntu|https://mirrors.tuna.tsinghua.
 sudo apt update
 sudo apt install ros-noetic-ur-robot-driver ros-noetic-universal-robots
 
+## RViz joint visualization
+
+Build and launch:
+
+```bash
+cd ~/ur5e_sim2real
+catkin_make
+source devel/setup.bash
+roslaunch ur5e_rl_control ur5e_rl_control.launch
+```
+
+Send a six-joint command (positions are radians):
+
+```bash
+rostopic pub -1 /ur5e/joint_command sensor_msgs/JointState \
+  "{name: ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint'], position: [0.0, -1.2, 1.4, -1.0, -1.57, 0.5]}"
+```
+
+Send an RL action directly (six absolute joint positions by default):
+
+```bash
+rostopic pub -1 /rl_action std_msgs/Float64MultiArray \
+  "data: [0.0, -1.2, 1.4, -1.0, -1.57, 0.5]"
+```
+
+The default `send_to_controller: false` only moves the RViz model. After the UR
+driver and trajectory controller are connected and safety has been checked, enable
+hardware output explicitly:
+
+```bash
+roslaunch ur5e_rl_control ur5e_rl_control.launch send_to_controller:=true
+```
+
+`action_mode: position` treats actions as radians. `action_mode: delta` adds each
+scaled action to the latest `/joint_states` position. Both modes apply the configured
+joint limits before publishing or sending a trajectory.
+
+The bridge also accepts a `JointState` with an empty `name` array when `position`
+contains exactly six values in the order shown above. To use another command topic:
+
+```bash
+roslaunch ur5e_rl_control ur5e_rl_control.launch input_topic:=/my_joint_command
+```
+
 # 
 ur5e_rl_control/
-├── include/
+├──asset/
+|  ├──ur5e.urdf
+├──include/
 │   └── ur5e_rl_control/
 │       ├── ur5e_execution_node.h
 │       ├── safety_filter.h
