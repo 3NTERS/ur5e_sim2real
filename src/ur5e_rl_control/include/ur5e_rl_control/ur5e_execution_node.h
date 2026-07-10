@@ -30,6 +30,7 @@ class UR5eExecutionNode {
   ros::Subscriber action_subscriber_;
   ros::Subscriber joint_state_subscriber_;
   ros::Publisher visualization_publisher_;
+  ros::Publisher rl_state_publisher_;
   std::unique_ptr<TrajectorySender> trajectory_sender_;
 
   std::vector<std::string> joint_names_;

@@ -9,7 +9,7 @@ Build and launch:
 
 ```bash
 cd ~/ur5e_sim2real
-catkin_make
+catkin_make -j4
 source devel/setup.bash
 roslaunch ur5e_rl_control ur5e_rl_control.launch
 ```
@@ -39,6 +39,31 @@ roslaunch ur5e_rl_control ur5e_rl_control.launch send_to_controller:=true
 `action_mode: position` treats actions as radians. `action_mode: delta` adds each
 scaled action to the latest `/joint_states` position. Both modes apply the configured
 joint limits before publishing or sending a trajectory.
+
+## RL state feedback
+
+`ur5e_execution_node` subscribes to the actual `/joint_states`, reorders every field
+to the configured UR5e joint order, and publishes `/rl_state` as an 18-element
+`std_msgs/Float64MultiArray`:
+
+```text
+[q1, q2, q3, q4, q5, q6,
+ dq1, dq2, dq3, dq4, dq5, dq6,
+ tau1, tau2, tau3, tau4, tau5, tau6]
+```
+
+Here `q` is joint position in rad, `dq` is joint velocity in rad/s, and `tau` is the
+driver-reported `JointState.effort` (normally N·m for revolute joints). Its exact
+physical meaning depends on the active UR driver/controller. Inspect it with:
+
+```bash
+rostopic echo /rl_state
+rostopic hz /rl_state
+```
+
+The feedback rate follows the incoming `/joint_states` rate. Frames missing a required
+joint or position are rejected. Missing/non-finite velocity or effort entries are
+reported and replaced by zero so the RL observation always remains 18-dimensional.
 
 ## Automatic action generator
 

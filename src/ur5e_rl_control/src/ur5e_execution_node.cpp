@@ -17,6 +17,7 @@ UR5eExecutionNode::UR5eExecutionNode(ros::NodeHandle nh,
 
   std::string rl_action_topic;
   std::string joint_state_topic;
+  std::string rl_state_topic;
   std::string visualization_topic;
   std::string controller_action;
   double controller_wait_timeout;
@@ -25,6 +26,8 @@ UR5eExecutionNode::UR5eExecutionNode(ros::NodeHandle nh,
                                  "/rl_action");
   private_nh_.param<std::string>("joint_state_topic", joint_state_topic,
                                  "/joint_states");
+  private_nh_.param<std::string>("rl_state_topic", rl_state_topic,
+                                 "/rl_state");
   private_nh_.param<std::string>("visualization_topic", visualization_topic,
                                  "/ur5e/joint_command");
   private_nh_.param<std::string>(
@@ -35,6 +38,8 @@ UR5eExecutionNode::UR5eExecutionNode(ros::NodeHandle nh,
 
   visualization_publisher_ =
       nh_.advertise<sensor_msgs::JointState>(visualization_topic, 10);
+  rl_state_publisher_ =
+      nh_.advertise<std_msgs::Float64MultiArray>(rl_state_topic, 10);
   action_subscriber_ = nh_.subscribe(rl_action_topic, 1,
                                      &UR5eExecutionNode::actionCallback, this);
   joint_state_subscriber_ =
@@ -55,6 +60,8 @@ UR5eExecutionNode::UR5eExecutionNode(ros::NodeHandle nh,
 
   ROS_INFO("UR5e execution node listening on %s (%s mode, scale %.3f)",
            rl_action_topic.c_str(), action_mode_.c_str(), action_scale_);
+  ROS_INFO("Publishing 18-D RL state [q(6), dq(6), tau(6)] on %s",
+           rl_state_topic.c_str());
   ROS_INFO("Controller output is %s",
            send_to_controller_ ? "ENABLED" : "DISABLED (RViz only)");
 }
@@ -157,19 +164,72 @@ bool UR5eExecutionNode::makeTarget(const std::vector<double>& action,
 void UR5eExecutionNode::jointStateCallback(
     const sensor_msgs::JointStateConstPtr& message) {
   if (message->name.size() != message->position.size()) {
+    ROS_WARN_THROTTLE(2.0,
+                      "Ignoring JointState: name and position sizes differ");
     return;
   }
-  std::unordered_map<std::string, double> positions;
+  std::unordered_map<std::string, std::size_t> indices;
   for (std::size_t i = 0; i < message->name.size(); ++i) {
-    positions[message->name[i]] = message->position[i];
+    indices[message->name[i]] = i;
   }
+
+  std::vector<double> positions(joint_names_.size());
+  std::vector<double> velocities(joint_names_.size(), 0.0);
+  std::vector<double> efforts(joint_names_.size(), 0.0);
+  bool velocity_incomplete = false;
+  bool effort_incomplete = false;
   for (std::size_t i = 0; i < joint_names_.size(); ++i) {
-    const auto found = positions.find(joint_names_[i]);
-    if (found == positions.end()) {
+    const auto found = indices.find(joint_names_[i]);
+    if (found == indices.end()) {
+      ROS_WARN_THROTTLE(2.0, "Ignoring JointState missing joint %s",
+                        joint_names_[i].c_str());
       return;
     }
-    current_positions_[i] = found->second;
+    const std::size_t source_index = found->second;
+    positions[i] = message->position[source_index];
+    if (!std::isfinite(positions[i])) {
+      ROS_WARN_THROTTLE(2.0, "Ignoring non-finite position for %s",
+                        joint_names_[i].c_str());
+      return;
+    }
+    if (source_index < message->velocity.size() &&
+        std::isfinite(message->velocity[source_index])) {
+      velocities[i] = message->velocity[source_index];
+    } else {
+      velocity_incomplete = true;
+    }
+    if (source_index < message->effort.size() &&
+        std::isfinite(message->effort[source_index])) {
+      efforts[i] = message->effort[source_index];
+    } else {
+      effort_incomplete = true;
+    }
   }
+
+  if (velocity_incomplete) {
+    ROS_WARN_THROTTLE(
+        5.0, "JointState has incomplete velocity data; missing values are zero");
+  }
+  if (effort_incomplete) {
+    ROS_WARN_THROTTLE(
+        5.0, "JointState has incomplete effort data; missing values are zero");
+  }
+
+  current_positions_ = positions;
+
+  std_msgs::Float64MultiArray rl_state;
+  rl_state.layout.dim.resize(2);
+  rl_state.layout.dim[0].label = "component(q,dq,tau)";
+  rl_state.layout.dim[0].size = 3;
+  rl_state.layout.dim[0].stride = 18;
+  rl_state.layout.dim[1].label = "ur5e_joint";
+  rl_state.layout.dim[1].size = 6;
+  rl_state.layout.dim[1].stride = 6;
+  rl_state.data.reserve(18);
+  rl_state.data.insert(rl_state.data.end(), positions.begin(), positions.end());
+  rl_state.data.insert(rl_state.data.end(), velocities.begin(), velocities.end());
+  rl_state.data.insert(rl_state.data.end(), efforts.begin(), efforts.end());
+  rl_state_publisher_.publish(rl_state);
 }
 
 void UR5eExecutionNode::publishVisualization(

@@ -21,6 +21,7 @@ initial_positions: [0.0, -1.57079632679, 1.57079632679, -1.57079632679, -1.57079
 rl_action_topic: /rl_action
 visualization_topic: /ur5e/joint_command
 joint_state_topic: /joint_states
+rl_state_topic: /rl_state
 controller_action: /scaled_pos_joint_traj_controller/follow_joint_trajectory
 
 # position: action values are absolute joint angles (rad).
