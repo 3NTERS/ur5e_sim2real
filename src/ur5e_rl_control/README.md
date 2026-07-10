@@ -40,6 +40,42 @@ roslaunch ur5e_rl_control ur5e_rl_control.launch send_to_controller:=true
 scaled action to the latest `/joint_states` position. Both modes apply the configured
 joint limits before publishing or sending a trajectory.
 
+## Automatic action generator
+
+Use the dedicated test launch to check the complete action-to-trajectory path. It
+starts in RViz-only mode and publishes the baseline pose for two seconds before the
+selected test signal begins.
+
+Step input:
+
+```bash
+roslaunch ur5e_rl_control ur5e_action_test.launch signal_type:=step
+```
+
+Sine input:
+
+```bash
+roslaunch ur5e_rl_control ur5e_action_test.launch signal_type:=sine
+```
+
+Generator parameters are in `config/cfg.yaml`:
+
+```yaml
+generator_start_delay: 2.0
+sine_frequency: 0.2
+generator_baseline: [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+generator_amplitude: [0.35, 0.0, 0.0, 0.0, 0.0, 0.0]
+```
+
+The example excites only `shoulder_pan_joint`; assign nonzero amplitudes to other
+joints to test them. Values are radians and sine frequency is Hz. Only after checking
+the range, environment and robot safety should controller output be enabled:
+
+```bash
+roslaunch ur5e_rl_control ur5e_action_test.launch \
+  signal_type:=sine send_to_controller:=true
+```
+
 The bridge also accepts a `JointState` with an empty `name` array when `position`
 contains exactly six values in the order shown above. To use another command topic:
 

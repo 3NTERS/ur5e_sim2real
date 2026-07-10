@@ -176,6 +176,7 @@ target_link_libraries(ur5e_execution_node
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/joint_state_visualizer.py
+  scripts/rl_action_generator.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

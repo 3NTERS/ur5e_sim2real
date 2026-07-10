@@ -1,0 +1,22 @@
+<launch>
+  <arg name="signal_type" default="step" />
+  <arg name="send_to_controller" default="false" />
+  <arg name="use_rviz" default="true" />
+  <arg name="rl_action_topic" default="/rl_action" />
+
+  <include file="$(find ur5e_rl_control)/launch/ur5e_rl_control.launch">
+    <arg name="rl_action_topic" value="$(arg rl_action_topic)" />
+    <arg name="action_mode" value="position" />
+    <arg name="send_to_controller" value="$(arg send_to_controller)" />
+    <arg name="use_rviz" value="$(arg use_rviz)" />
+  </include>
+
+  <node pkg="ur5e_rl_control"
+        type="rl_action_generator.py"
+        name="rl_action_generator"
+        output="screen">
+    <rosparam command="load" file="$(find ur5e_rl_control)/config/cfg.yaml" />
+    <param name="signal_type" value="$(arg signal_type)" />
+    <param name="rl_action_topic" value="$(arg rl_action_topic)" />
+  </node>
+</launch>

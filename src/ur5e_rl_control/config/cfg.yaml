@@ -36,3 +36,11 @@ controller_wait_timeout: 5.0
 clamp_to_limits: true
 lower_limits: [-6.28318530718, -6.28318530718, -3.14159265359, -6.28318530718, -6.28318530718, -6.28318530718]
 upper_limits: [6.28318530718, 6.28318530718, 3.14159265359, 6.28318530718, 6.28318530718, 6.28318530718]
+
+# Test action generator. Amplitudes of zero keep a joint fixed.
+signal_type: step
+generator_publish_rate: 50.0
+generator_start_delay: 2.0
+sine_frequency: 0.2
+generator_baseline: [0.0, -1.57079632679, 1.57079632679, -1.57079632679, -1.57079632679, 0.0]
+generator_amplitude: [0.35, 0.0, 0.0, 0.0, 0.0, 0.0]

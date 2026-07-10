@@ -2,6 +2,7 @@
   <arg name="input_topic" default="/ur5e/joint_command" />
   <arg name="output_topic" default="/joint_states" />
   <arg name="rl_action_topic" default="/rl_action" />
+  <arg name="action_mode" default="position" />
   <arg name="send_to_controller" default="false" />
   <arg name="use_rviz" default="true" />
 
@@ -11,6 +12,7 @@
   <node pkg="ur5e_rl_control"
         type="joint_state_visualizer.py"
         name="ur5e_joint_state_bridge"
+        unless="$(arg send_to_controller)"
         output="screen">
     <rosparam command="load" file="$(find ur5e_rl_control)/config/cfg.yaml" />
     <param name="input_topic" value="$(arg input_topic)" />
@@ -25,6 +27,7 @@
     <param name="rl_action_topic" value="$(arg rl_action_topic)" />
     <param name="visualization_topic" value="$(arg input_topic)" />
     <param name="joint_state_topic" value="$(arg output_topic)" />
+    <param name="action_mode" value="$(arg action_mode)" />
     <param name="send_to_controller" value="$(arg send_to_controller)" />
   </node>
 
