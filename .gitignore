@@ -1,4 +1,21 @@
-# src
-/build
-/devel
-.vscode
+# Catkin build products
+/build/
+/devel/
+/install/
+/logs/
+/.catkin_tools/
+/.catkin_workspace
+
+# IDE and local files
+.vscode/
+.idea/
+*.swp
+*.pyc
+__pycache__/
+
+# Publish only ur5e_rl_control. Ignore every other package under src while
+# retaining the catkin workspace entry point.
+/src/*
+!/src/CMakeLists.txt
+!/src/ur5e_rl_control/
+!/src/ur5e_rl_control/**
